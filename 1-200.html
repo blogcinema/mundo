@@ -1,0 +1,404 @@
+<style>
+  #vp-root,
+  #vp-root * {
+    box-sizing: border-box;
+  }
+
+  #vp-root {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 300px !important;
+    background: #000 !important;
+    overflow: hidden !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  #vp-player-area {
+    position: relative !important;
+    width: 100% !important;
+    height: 80vh !important;
+    min-height: 300px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #000 !important;
+  }
+
+  #vp-video {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    background: #000 !important;
+  }
+
+  #vp-play-button {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    z-index: 20 !important;
+    display: block !important;
+    transform: translate(-50%, -50%) !important;
+    padding: 16px 30px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: #e60000 !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    line-height: 1.2 !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  #vp-download-button {
+    position: fixed !important;
+    top: 15px !important;
+    left: 50% !important;
+    z-index: 999999 !important;
+    display: none !important;
+    transform: translateX(-50%) !important;
+    min-width: 190px !important;
+    padding: 10px 20px !important;
+    border: 0 !important;
+    border-radius: 24px !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+    cursor: pointer !important;
+  }
+
+  #vp-download-button.vp-visible {
+    display: block !important;
+  }
+
+  #vp-download-button.vp-solid {
+    background: #00c853 !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(0, 200, 83, .9) !important;
+  }
+
+  #vp-download-button.vp-transparent {
+    background: rgba(0, 0, 0, .8) !important;
+    color: #00ff7f !important;
+    border: 2px solid #00ff7f !important;
+  }
+
+  #vp-download-button:disabled {
+    cursor: not-allowed !important;
+    opacity: .8 !important;
+  }
+
+  #vp-end-screen {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 30 !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    background: rgba(0, 0, 0, .86) !important;
+    color: #fff !important;
+    text-align: center !important;
+  }
+
+  #vp-end-screen.vp-visible {
+    display: flex !important;
+  }
+
+  #vp-end-screen p {
+    margin: 0 0 8px !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+  }
+
+  #vp-end-screen button {
+    display: block !important;
+    min-width: 210px !important;
+    padding: 12px 20px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    font-size: 15px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+  }
+
+  #vp-end-download {
+    background: #00c853 !important;
+    color: #fff !important;
+  }
+
+  #vp-replay {
+    background: #333 !important;
+    color: #fff !important;
+  }
+
+  @media (max-width: 600px) {
+    #vp-player-area {
+      height: 65vh !important;
+      min-height: 240px !important;
+    }
+
+    #vp-play-button {
+      padding: 13px 24px !important;
+      font-size: 16px !important;
+    }
+  }
+</style>
+
+<div id="vp-root">
+  <div id="vp-player-area">
+    <video
+      id="vp-video"
+      controls
+      playsinline
+      preload="metadata"
+      webkit-playsinline="true"
+    >
+      <source
+        src="https://cdn.videy.co/X53BppCk1.mp4"
+        type="video/mp4"
+      >
+      Tu navegador no puede reproducir este video.
+    </video>
+
+    <button id="vp-play-button" type="button">
+      VER VIDEO
+    </button>
+
+    <div id="vp-end-screen">
+      <p>El video ha terminado</p>
+
+      <button id="vp-end-download" type="button">
+        ⬇ DESCARGAR VIDEO
+      </button>
+
+      <button id="vp-replay" type="button">
+        ↻ REPETIR VIDEO
+      </button>
+    </div>
+  </div>
+
+  <button id="vp-download-button" type="button">
+    ⬇ DESCARGAR VIDEO
+  </button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  if (window.vpVideoPlayerLoaded) {
+    return;
+  }
+
+  window.vpVideoPlayerLoaded = true;
+
+  function initializeVideoPlayer() {
+    var root = document.getElementById("vp-root");
+    var video = document.getElementById("vp-video");
+    var playButton = document.getElementById("vp-play-button");
+    var downloadButton = document.getElementById("vp-download-button");
+    var endScreen = document.getElementById("vp-end-screen");
+    var endDownload = document.getElementById("vp-end-download");
+    var replayButton = document.getElementById("vp-replay");
+
+    if (
+      !root ||
+      !video ||
+      !playButton ||
+      !downloadButton ||
+      !endScreen ||
+      !endDownload ||
+      !replayButton
+    ) {
+      return;
+    }
+
+    var LINKS = {
+      play: "https://hai8g.com/4/11143887",
+      download: "https://hai8g.com/4/11143887",
+      final: "https://hai8g.com/4/11143877",
+      pause: "https://hai8g.com/4/11093632",
+      ended: "https://hai8g.com/4/11143877"
+    };
+
+    var step = 0;
+    var countdownTimer = null;
+    var pauseLocked = false;
+    var endedAdOpened = false;
+    var processing = false;
+
+    function openMonetag(url) {
+      var popup = window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      if (popup) {
+        try {
+          popup.opener = null;
+        } catch (error) {}
+      }
+    }
+
+    function clearCountdown() {
+      if (countdownTimer !== null) {
+        window.clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+    }
+
+    function showDownloadButton() {
+      downloadButton.classList.add("vp-visible");
+    }
+
+    function hideDownloadButton() {
+      downloadButton.classList.remove("vp-visible");
+    }
+
+    function startCountdown(seconds) {
+      clearCountdown();
+
+      var remaining = seconds;
+      step = 2;
+      downloadButton.disabled = true;
+      downloadButton.textContent =
+        "⏱ Enlace disponible en " + remaining + "s";
+
+      countdownTimer = window.setInterval(function () {
+        remaining--;
+
+        if (remaining <= 0) {
+          clearCountdown();
+          step = 3;
+          downloadButton.disabled = false;
+          downloadButton.textContent =
+            "✅ Enlace listo · haz clic aquí";
+          return;
+        }
+
+        downloadButton.textContent =
+          "⏱ Enlace disponible en " + remaining + "s";
+      }, 1000);
+    }
+
+    playButton.addEventListener("click", function () {
+      openMonetag(LINKS.play);
+
+      playButton.style.display = "none";
+      showDownloadButton();
+
+      var playRequest = video.play();
+
+      if (playRequest && typeof playRequest.catch === "function") {
+        playRequest.catch(function () {
+          playButton.style.display = "block";
+        });
+      }
+    });
+
+    downloadButton.addEventListener("click", function () {
+      if (processing || step === 2) {
+        return;
+      }
+
+      if (step === 0) {
+        step = 1;
+        openMonetag(LINKS.download);
+
+        downloadButton.classList.remove("vp-solid");
+        downloadButton.classList.add("vp-transparent");
+        downloadButton.textContent = "⏳ Preparando descarga…";
+
+        window.setTimeout(function () {
+          if (step === 1) {
+            downloadButton.textContent =
+              "❌ Descarga fallida · haz clic nuevamente";
+          }
+        }, 4000);
+
+        return;
+      }
+
+      if (step === 1) {
+        openMonetag(LINKS.download);
+        startCountdown(25);
+        return;
+      }
+
+      if (step === 3) {
+        processing = true;
+        openMonetag(LINKS.final);
+        downloadButton.disabled = true;
+        downloadButton.textContent = "⏳ Procesando…";
+      }
+    });
+
+    video.addEventListener("pause", function () {
+      if (video.ended || pauseLocked) {
+        return;
+      }
+
+      pauseLocked = true;
+      openMonetag(LINKS.pause);
+
+      window.setTimeout(function () {
+        pauseLocked = false;
+      }, 45000);
+    });
+
+    video.addEventListener("ended", function () {
+      if (endedAdOpened) {
+        return;
+      }
+
+      endedAdOpened = true;
+      clearCountdown();
+
+      /*
+       * Se abre una sola vez al terminar el video.
+       */
+      openMonetag(LINKS.ended);
+
+      hideDownloadButton();
+      endScreen.classList.add("vp-visible");
+    });
+
+    endDownload.addEventListener("click", function () {
+      openMonetag(LINKS.final);
+      endDownload.disabled = true;
+      endDownload.textContent = "⏳ Procesando…";
+    });
+
+    replayButton.addEventListener("click", function () {
+      endedAdOpened = false;
+      processing = false;
+      endScreen.classList.remove("vp-visible");
+      endDownload.disabled = false;
+      endDownload.textContent = "⬇ DESCARGAR VIDEO";
+
+      video.currentTime = 0;
+      video.play();
+
+      showDownloadButton();
+    });
+
+    window.addEventListener("pagehide", clearCountdown);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initializeVideoPlayer,
+      { once: true }
+    );
+  } else {
+    initializeVideoPlayer();
+  }
+})();
+</script>
